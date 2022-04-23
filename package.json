@@ -35,7 +35,7 @@
     "appId": "org.erb.Personel Anket",
     "asar": true,
     "asarUnpack": "**\\*.{node,dll}",
-    "buildVersion": "0.0.1",
+    "buildVersion": "0.0.2",
     "files": [
       "dist",
       "node_modules",
