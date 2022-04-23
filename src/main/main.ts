@@ -123,9 +123,12 @@ export default class AppUpdater {
     // const server = 'https://github.com/yarasaa/anket-app';
     // const url = `${server}/releases/tag/${app.getVersion()}`;
     log.transports.file.level = 'info';
-    autoUpdater.autoDownload = true;
     // autoUpdater.setFeedURL(url);
     autoUpdater.logger = log;
+    autoUpdater.channel = 'latest';
+    autoUpdater.allowDowngrade = false;
+
+    autoUpdater.autoDownload = true;
     console.log("App updater'a girdi...");
     autoUpdater.checkForUpdatesAndNotify();
   }
@@ -371,11 +374,6 @@ app.on('activate', () => {
   // dock icon is clicked and there are no other windows open.
   if (mainWindow === null) createWindow();
 });
-
-autoUpdater.channel = 'latest';
-autoUpdater.allowDowngrade = false;
-
-autoUpdater.autoDownload = true;
 
 autoUpdater.on('update-downloaded', () => {
   dialog.showMessageBox({
