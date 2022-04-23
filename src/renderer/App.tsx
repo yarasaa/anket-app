@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable no-console */
 /* eslint-disable eqeqeq */
 /* eslint-disable react/self-closing-comp */
@@ -14,10 +15,11 @@
 import { useEffect, useState } from 'react';
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
-import API from './api';
+import { API } from './api';
 
 var dateFormat = new Date().toISOString().slice(0, 10);
 console.log(dateFormat);
+console.log(window.electron.store.get('osUser'), 'Rendererda ki store islemi');
 
 const delay = (ms: number | undefined) =>
   new Promise((resolve) => setTimeout(resolve, ms));
@@ -34,6 +36,7 @@ declare global {
         set: (key: string, val: any) => void;
       };
     };
+    ipcRenderer: any;
   }
 }
 const Hello = () => {
@@ -71,9 +74,9 @@ const Hello = () => {
     try {
       const result = await API.USERS_POSTINFO(userInfo);
       await delay(5000);
-      setUserInfo(result.data);
-      console.log('PostUserInfo', result);
-      console.log('resultdatadata', result.data);
+      setUserInfo(result?.data?.data);
+      console.log('PostUserInfo fonksiyonu', result);
+      //console.log('resultdatadata', result.data);
       setUserIdFromdata(result.data.data);
       window.electron.store.set('userIdToMain', userIdFromData.id);
       console.log(userInfo);
@@ -113,7 +116,6 @@ const Hello = () => {
         unitName: result?.data?.unitName,
         id: null,
       });
-
       window.electron.store.set('firstname', result?.data?.firstName);
 
       if (result) {
@@ -179,6 +181,7 @@ const Hello = () => {
 
   return (
     <div>
+      <div>{window.electron.store.get('appVersion')}</div>
       <div
         style={{
           marginBottom: '2rem',

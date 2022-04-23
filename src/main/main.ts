@@ -1,3 +1,7 @@
+/* eslint-disable promise/catch-or-return */
+/* eslint-disable radix */
+/* eslint-disable prefer-template */
+/* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable no-self-compare */
 /* eslint-disable func-names */
 /* eslint-disable promise/no-nesting */
@@ -29,29 +33,28 @@ import {
   ipcMain,
   screen,
   nativeImage,
+  dialog,
 } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import fetch from 'electron-fetch';
 import Store from 'electron-store';
-import { preloadScriptPath } from 'electron-debug';
 import { resolveHtmlPath } from './util';
+
+const os = require('os');
 
 const store = new Store();
 
-let username = '';
+// let username = '';s
 const dateFormat = new Date().toISOString().slice(0, 10);
 
-ipcMain.on('electron-store-get', async (event, val) => {
-  event.returnValue = store.get(val);
-});
-ipcMain.on('electron-store-set', async (event, key, val) => {
-  console.log(key, val, '********');
-  if (key === 'username') {
-    username = val;
-  }
-  store.set(key, val);
-});
+// ipcMain.on('electron-store-set', async (event, key, val) => {
+//   console.log(key, val, '********');
+//   if (key === 'username') {
+//     username = val;
+//   }
+//   store.set(key, val);
+// });
 
 let isAppQuitting = false;
 let tray = null;
@@ -68,18 +71,6 @@ function randomMinute(min: any, max: any) {
   return Math.random() * (max - min) + min;
 }
 
-function traySystem() {
-  const img = nativeImage.createFromPath(
-    path.join(__dirname, 'assets', 'icon.png')
-  );
-
-  tray = new Tray(img);
-  tray.setToolTip('Anket Uygulaması');
-  tray.on('click', () => {
-    mainWindow?.isVisible() ? mainWindow.hide() : mainWindow?.show();
-  });
-}
-
 function startNotifyTimerAM() {
   var timeInterval: any = setInterval(() => {
     store.set('date', new Date());
@@ -93,21 +84,28 @@ function startNotifyTimerAM() {
   }, 1000);
 }
 let afterRemoveOsName = '';
-function osUserName() {
-  const os = require('os');
-  const osName = os.userInfo().username;
-  afterRemoveOsName = osName.slice(2);
-  console.log(afterRemoveOsName);
-  //window.electron.store.set('osUser', afterRemoveOsName);
 
-  ipcMain.on('electron-store-set', async (event, key, val) => {
-    console.log(key, val, '********');
+const osName = os.userInfo().username;
+afterRemoveOsName = osName.slice(2);
 
-    store.set('osUser', afterRemoveOsName);
-  });
-}
+ipcMain.on('electron-store-set', async (event, key, val) => {
+  // console.log(key, val, '********');
+  // console.log(afterRemoveOsName, 'main');
 
-osUserName();
+  store.set('osUser', afterRemoveOsName);
+});
+
+ipcMain.on('electron-store-get', async (event, val) => {
+  event.returnValue = store.get(val);
+});
+
+ipcMain.on('electron-store-set', async (event, key, val) => {
+  // console.log(key, val, '********');
+  // console.log(afterRemoveOsName, 'main');
+
+  store.set('appVersion', app.getVersion());
+});
+
 function startNotifyTimerPM() {
   var timeInterval: any = setInterval(() => {
     store.set('date', new Date());
@@ -122,19 +120,43 @@ function startNotifyTimerPM() {
 
 export default class AppUpdater {
   constructor() {
+    // const server = 'https://github.com/yarasaa/anket-app';
+    // const url = `${server}/releases/tag/${app.getVersion()}`;
     log.transports.file.level = 'info';
+    autoUpdater.autoDownload = true;
+    // autoUpdater.setFeedURL(url);
     autoUpdater.logger = log;
     autoUpdater.checkForUpdatesAndNotify();
   }
 }
 
+// autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
+//   const dialogOpts = {
+//     type: 'info',
+//     buttons: ['Restart', 'Later'],
+//     title: 'Application Update',
+//     message: process.platform === 'win32' ? releaseNotes : releaseName,
+//     detail:
+//       'A new version has been downloaded. Restart the application to apply the updates.',
+//   };
+
+//   dialog.showMessageBox(dialogOpts).then((returnValue) => {
+//     if (returnValue.response === 0) autoUpdater.quitAndInstall();
+//   });
+// });
+
+// autoUpdater.on('error', (message) => {
+//   console.error('There was a problem updating the application');
+//   console.error(message);
+// });
+
 let mainWindow: any | null = null;
 
-ipcMain.on('ipc-example', async (event: any, arg: any) => {
-  const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
-  console.log(msgTemplate(arg));
-  event.reply('ipc-example', msgTemplate('pong'));
-});
+// ipcMain.on('ipc-example', async (event: any, arg: any) => {
+//   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
+//   console.log(msgTemplate(arg));
+//   event.reply('ipc-example', msgTemplate('pong'));
+// });
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -202,6 +224,10 @@ const createWindow = async () => {
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
 
+  mainWindow.once('ready-to-show', () => {
+    autoUpdater.checkForUpdatesAndNotify();
+  });
+
   mainWindow.on('ready-to-show', () => {
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
@@ -225,7 +251,7 @@ const createWindow = async () => {
 
   // eslint-disable-next-line func-names
   mainWindow.on('close', function (event: any) {
-    console.log(afterRemoveOsName);
+    console.log(afterRemoveOsName, '***');
     fetch(`https://localhost:7038/api/UserInfoAdd?sicilNo=${afterRemoveOsName}`)
       .then((res: { json: () => any }) => res.json())
       .then((json: { id?: any; data: any }) => {
@@ -254,7 +280,6 @@ const createWindow = async () => {
       });
     //
     // await getUserInfo();
-    console.log('jhkjhkjhj');
     if (!isAppQuitting) {
       event.preventDefault();
       mainWindow?.hide();
@@ -312,11 +337,22 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
+app.on('ready', () => {
+  autoUpdater.checkForUpdatesAndNotify();
+  app.hasSingleInstanceLock();
+});
 
 app
   .whenReady()
   .then(createWindow)
-  .then(traySystem)
+  .then(() => {
+    const trayIcon = nativeImage.createFromPath('../resources/happy.ico');
+    tray = new Tray(trayIcon);
+    tray.setToolTip('Anket Uygulaması');
+    tray.on('click', () => {
+      mainWindow?.isVisible() ? mainWindow.hide() : mainWindow?.show();
+    });
+  })
   .then(() => {
     startNotifyTimerAM();
   })
@@ -333,4 +369,11 @@ app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (mainWindow === null) createWindow();
+});
+
+autoUpdater.on('update-available', () => {
+  mainWindow.webContents.send('update_available');
+});
+autoUpdater.on('update-downloaded', () => {
+  mainWindow.webContents.send('update_downloaded');
 });
