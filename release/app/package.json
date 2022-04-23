@@ -1,6 +1,6 @@
 {
   "name": "anket-application",
-  "version": "0.0.2",
+  "version": "0.0.1",
   "description": "Burgan Bank Personel Memnuniyet Anketi",
   "main": "./dist/main/main.js",
   "author": {

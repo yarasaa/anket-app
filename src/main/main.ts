@@ -126,6 +126,7 @@ export default class AppUpdater {
     autoUpdater.autoDownload = true;
     // autoUpdater.setFeedURL(url);
     autoUpdater.logger = log;
+    console.log("App updater'a girdi...");
     autoUpdater.checkForUpdatesAndNotify();
   }
 }
@@ -371,9 +372,25 @@ app.on('activate', () => {
   if (mainWindow === null) createWindow();
 });
 
-autoUpdater.on('update-available', () => {
-  mainWindow.webContents.send('update_available');
-});
+autoUpdater.channel = 'latest';
+autoUpdater.allowDowngrade = false;
+
+autoUpdater.autoDownload = true;
+
 autoUpdater.on('update-downloaded', () => {
-  mainWindow.webContents.send('update_downloaded');
+  dialog.showMessageBox({
+    message: 'update Downloaded !!',
+  });
+});
+
+autoUpdater.on('checking-for-update', () => {
+  dialog.showMessageBox({
+    message: 'CHECKING FOR UPDATES !!',
+  });
+});
+
+autoUpdater.on('update-available', () => {
+  dialog.showMessageBox({
+    message: ' update-available !!',
+  });
 });
