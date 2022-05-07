@@ -7,6 +7,7 @@
 import api from './api';
 
 console.log(window.electron.store.get('osUser'), 'api index içi');
+
 let userSicil = window.electron.store.get('osUser');
 console.log(userSicil + 'testindex');
 // eslint-disable-next-line import/prefer-default-export

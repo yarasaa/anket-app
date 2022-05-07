@@ -1,3 +1,15 @@
+/* eslint-disable promise/catch-or-return */
+/* eslint-disable func-names */
+/* eslint-disable no-plusplus */
+/* eslint-disable import/newline-after-import */
+/* eslint-disable no-restricted-globals */
+/* eslint-disable global-require */
+/* eslint-disable import/no-unresolved */
+/* eslint-disable promise/always-return */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable import/order */
+/* eslint-disable consistent-return */
+/* eslint-disable @typescript-eslint/no-use-before-define */
 /* eslint-disable prettier/prettier */
 /* eslint-disable no-console */
 /* eslint-disable eqeqeq */
@@ -16,7 +28,6 @@ import { useEffect, useState } from 'react';
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import { API } from './api';
-
 var dateFormat = new Date().toISOString().slice(0, 10);
 console.log(dateFormat);
 console.log(window.electron.store.get('osUser'), 'Rendererda ki store islemi');
@@ -34,9 +45,11 @@ declare global {
       store: {
         get: (key: string) => any;
         set: (key: string, val: any) => void;
+        once: (channel: string, func: (...args: any[]) => void) => void;
+        myPing: () => any;
       };
+      ipcRenderer: any;
     };
-    ipcRenderer: any;
   }
 }
 const Hello = () => {
@@ -57,28 +70,23 @@ const Hello = () => {
    *
    */
 
-  const [userInfo, setUserInfo] = useState({
-    UserId: window.electron.store.get('osUser') || '',
-    department: window.electron.store.get('databaseDepartment') || null,
-    section: window.electron.store.get('databaseSection') || null,
-    unit: window.electron.store.get('databaseUnitName') || null,
-  });
+  const [userIdFromData, setUserIdFromdata] = useState<any>();
 
-  const [userIdFromData, setUserIdFromdata] = useState({
-    id: '',
-    userId: '',
-  });
-
-  async function postUserInfo(userInfo: any) {
+  async function postUserInfo() {
     //console.log(result)
     try {
+      let resultUser = await getUserFromBankData();
+      let userInfo = {
+        UserId: window.electron.store.get('osUser') || '',
+        department: resultUser?.divisionName,
+        section: resultUser?.gorevAd,
+        unit: resultUser?.unitName,
+      };
+      console.log(resultUser, userInfo);
       const result = await API.USERS_POSTINFO(userInfo);
-      await delay(5000);
-      setUserInfo(result?.data?.data);
       console.log('PostUserInfo fonksiyonu', result);
-      //console.log('resultdatadata', result.data);
-      setUserIdFromdata(result.data.data);
-      window.electron.store.set('userIdToMain', userIdFromData.id);
+
+      setUserIdFromdata(result?.data?.data);
       console.log(userInfo);
       if (result) {
         setMessage(result.data?.message);
@@ -89,25 +97,76 @@ const Hello = () => {
   }
 
   useEffect(() => {
+    if (userIdFromData?.id) {
+      window.electron.ipcRenderer.on('hideWindow', async (value: any) => {
+        console.log('asdasf');
+        const result = await API.USERS_LIST();
+        console.log('bankdata', result);
+        if (result.data) {
+          console.log(userIdFromData, 'aasdad');
+          let postData = {
+            department: result.data.divisionName,
+            section: result.data.meslekAd,
+            Unit: result.data.unitName,
+            vote: 0,
+            userId: userIdFromData?.id,
+            votedate: dateFormat,
+          };
+          postVote(postData);
+        }
+      });
+    }
+  }, [userIdFromData]);
+
+  useEffect(() => {
+    // window.electron.store.myPing();
+
     try {
-      postUserInfo(userInfo);
+      // let ssInterval = setInterval(async () => {
+      //   let isAppClose = window.electron.store.get('appClose');
+      //   console.log(isAppClose, userIdFromData);
+      //   if (isAppClose == true && userIdFromData) {
+      //     window.electron.store.set('appClose', false);
+      //     console.log('isAppClose');
+      //     console.log(user);
+
+      //     const result = await API.USERS_LIST();
+      //     console.log('bankdata', result);
+      //     let postData = {
+      //       department: result.data.divisionName,
+      //       section: result.data.meslekAd,
+      //       Unit: result.data.unitName,
+      //       vote: 0,
+      //       userId: userIdFromData?.id,
+      //       votedate: dateFormat,
+      //     };
+      //     await postVote(postData);
+      //     clearInterval(ssInterval);
+      //   }
+      // }, 5000);
+
+      postUserInfo();
     } catch (error) {
       console.log('Use effect tabloya kullanıcı bilgisi yollama', error);
     }
   }, []);
 
-  async function getUserFromBankData() {
+  // window.addEventListener('hide', () => {
+  //   let postData = {
+  //     department: user.divisionName,
+  //     section: user.meslekAd,
+  //     Unit: user.unitName,
+  //     vote: 0,
+  //     userId: userIdFromData.id,
+  //     votedate: dateFormat,
+  //   };
+  //   postVote(postData);
+  // });
+
+  async function getUserFromBankData(): Promise<any> {
     try {
       const result = await API.USERS_LIST();
-      // await delay(10000);
-
       console.log('bankdata', result);
-      window.electron.store.set(
-        'databaseDepartment',
-        result?.data?.divisionName
-      );
-      window.electron.store.set('databaseSection', result?.data?.meslekAd);
-      window.electron.store.set('databaseUnitName', result?.data?.unitName);
       setUser({
         divisionName: result?.data?.divisionName,
         firstName: result?.data?.firstName,
@@ -116,39 +175,17 @@ const Hello = () => {
         unitName: result?.data?.unitName,
         id: null,
       });
-      window.electron.store.set('firstname', result?.data?.firstName);
 
       if (result) {
         setMessage(result?.data?.message);
+        return result?.data;
       }
+      return null;
     } catch (error) {
       console.log('Banka tablosundan kullanıcı bilgisi çekme', error);
     }
   }
 
-  useEffect(() => {
-    try {
-      getUserFromBankData();
-    } catch (error) {
-      console.log('Use effect bankadan kullanıcı bilgisi çekme', error);
-    }
-  }, []);
-
-  // async function getUserId() {
-  //   const result = await API.USERS_INFOLIST();
-  //   // console.log(result,result.data.data);
-  //   setUserIdFromdata(result?.data?.data);
-
-  //   console.log("GetUserODFromData",result?.data?.data);
-
-  //   if (result) {
-  //     setMessage(result?.data?.message);
-  //   }
-  // }
-  // useEffect(() => {
-
-  //   getUserId();
-  // }, []);
   async function postVote(params: any) {
     try {
       const result = await API.USERS_POST(params);
@@ -197,12 +234,12 @@ const Hello = () => {
             fontFamily: 'sans-serif',
           }}
         >
-          Merhaba , {window.electron.store.get('firstname')}
+          Merhaba , {user?.firstName}
         </span>
         <br></br>
         Bugün kendini nasıl hissediyorsun?
       </div>
-      <ul className="feedback">
+      <ul className="feedback" id="feedbackClose">
         <li
           onClick={() => setCheck('sad')}
           className={`sad ${check == 'sad' ? 'active' : ''}`}

@@ -1,3 +1,19 @@
+/* eslint-disable no-plusplus */
+/* eslint-disable one-var */
+/* eslint-disable prefer-destructuring */
+/* eslint-disable no-new */
+/* eslint-disable no-unused-labels */
+/* eslint-disable object-shorthand */
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable no-labels */
+/* eslint-disable vars-on-top */
+/* eslint-disable import/newline-after-import */
+/* eslint-disable @typescript-eslint/no-shadow */
+/* eslint-disable import/extensions */
+/* eslint-disable @typescript-eslint/no-redeclare */
+/* eslint-disable no-lone-blocks */
+/* eslint-disable @typescript-eslint/return-await */
+/* eslint-disable consistent-return */
 /* eslint-disable promise/catch-or-return */
 /* eslint-disable radix */
 /* eslint-disable prefer-template */
@@ -25,28 +41,31 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import {
+import electron, {
   app,
   BrowserWindow,
   shell,
   Tray,
   ipcMain,
   screen,
-  nativeImage,
-  dialog,
 } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
-import fetch from 'electron-fetch';
-import Store from 'electron-store';
-import { resolveHtmlPath } from './util';
 
+import Store from 'electron-store';
+
+import { resolveHtmlPath } from './util';
+var count = 0;
 const os = require('os');
 
+const appFolder = path.dirname(process.execPath);
+const exeName = path.basename(process.execPath);
+const time = new Date().getHours();
+var CronJob = require('cron').CronJob;
 const store = new Store();
 
 // let username = '';s
-const dateFormat = new Date().toISOString().slice(0, 10);
+// const dateFormat = new Date().toISOString().slice(0, 10);
 
 // ipcMain.on('electron-store-set', async (event, key, val) => {
 //   console.log(key, val, '********');
@@ -56,42 +75,56 @@ const dateFormat = new Date().toISOString().slice(0, 10);
 //   store.set(key, val);
 // });
 
+ipcMain.on('ipc-example', async (event, arg) => {
+  const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
+  console.log(msgTemplate(arg));
+  event.reply('ipc-example', msgTemplate('pong'));
+});
+
 let isAppQuitting = false;
-let tray = null;
-const hour = new Date();
-const pcTime = new Date();
-hour.setHours(randomHour(9, 11), randomMinute(1, 58), 0);
 
-console.log(hour);
+// console.log(hour);
 
-function randomHour(min: any, max: any) {
-  return Math.random() * (max - min) + min;
-}
-function randomMinute(min: any, max: any) {
-  return Math.random() * (max - min) + min;
-}
+// function randomHour(min: any, max: any) {
+//   return Math.random() * (max - min) + min;
+// }
+// function randomMinute(min: any, max: any) {
+//   return Math.random() * (max - min) + min;
+// }
+// hour.setHours(randomHour(9, 11), randomMinute(1, 58), 0);
 
-function startNotifyTimerAM() {
-  var timeInterval: any = setInterval(() => {
-    store.set('date', new Date());
-    if (hour === pcTime) {
-      console.log(hour, pcTime);
-      mainWindow.show();
-      clearInterval(timeInterval);
-      hour.setHours(randomHour(13, 17), randomMinute(1, 58), 0);
-      startNotifyTimerPM();
-    }
-  }, 1000);
-}
+// function startNotifyTimerAM() {
+//   var timeInterval: any = setInterval(() => {
+//     var timeOffsetInHours = -new Date().getTimezoneOffset() / 60;
+//     //console.log(timeOffsetInHours);
+//     const pcTime = new Date();
+//     store.set('date', new Date());
+
+//     //Bilgisayar açıldı saati 10 olarak aldı. Bilgisayarda bir sıkıntı oldu restart atılması gerekti.
+//     //Tekrar çalıştığı için uygulama aralıktan bu sefer 9 u seçti. Bundan dolayı seçtiği saat bilgisayar saatinden geride kaldı.
+//     //
+//     if (hour === pcTime) {
+//       console.log(hour, pcTime);
+//       mainWindow.show();
+//       clearInterval(timeInterval);
+//       hour.setHours(randomHour(13, 17), randomMinute(1, 58), 0);
+//       startNotifyTimerPM();
+//     } else if (hour !== pcTime) {
+//       hour.setHours(randomHour(9, 11), randomMinute(1, 58), 0);
+//     }
+//     console.log('RandomHour: ', hour, 'PcTime: ', pcTime);
+//   }, 1000);
+// }
+
 let afterRemoveOsName = '';
 
 const osName = os.userInfo().username;
 afterRemoveOsName = osName.slice(2);
 
-ipcMain.on('electron-store-set', async (event, key, val) => {
+ipcMain.on('electron-store-set', async (_event, _key, _val) => {
   // console.log(key, val, '********');
   // console.log(afterRemoveOsName, 'main');
-
+  store.set('appVersion', app.getVersion());
   store.set('osUser', afterRemoveOsName);
 });
 
@@ -99,24 +132,19 @@ ipcMain.on('electron-store-get', async (event, val) => {
   event.returnValue = store.get(val);
 });
 
-ipcMain.on('electron-store-set', async (event, key, val) => {
-  // console.log(key, val, '********');
-  // console.log(afterRemoveOsName, 'main');
-
-  store.set('appVersion', app.getVersion());
-});
-
-function startNotifyTimerPM() {
-  var timeInterval: any = setInterval(() => {
-    store.set('date', new Date());
-    if (hour === pcTime) {
-      console.log(hour, pcTime);
-      clearInterval(timeInterval);
-      hour.setHours(randomHour(9, 11), randomMinute(1, 58), 0);
-      startNotifyTimerAM();
-    }
-  }, 1000);
-}
+// function startNotifyTimerPM() {
+//   var timeInterval: any = setInterval(() => {
+//     const pcTime = new Date();
+//     store.set('date', new Date());
+//     if (hour === pcTime) {
+//
+//       console.log(hour, pcTime);
+//       clearInterval(timeInterval);
+//       hour.setHours(randomHour(9, 11), randomMinute(1, 58), 0);
+//       startNotifyTimerAM();
+//     }
+//   }, 1000);
+// }
 
 export default class AppUpdater {
   constructor() {
@@ -204,7 +232,7 @@ const createWindow = async () => {
     show: false,
     width: 450,
     height: 300,
-    icon: getAssetPath('happy.ico'),
+    icon: getAssetPath('happyApp.ico'),
     resizable: true,
     autoHideMenuBar: true,
     transparent: false,
@@ -227,6 +255,8 @@ const createWindow = async () => {
   });
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
+  // mainWindow.setOverlayIcon('./assets/icons/happyApp.ico', 'Anket Uygulaması');
+  // mainWindow.setIcon('./assets/icons/happyApp.ico');
 
   mainWindow.once('ready-to-show', () => {
     autoUpdater.checkForUpdatesAndNotify();
@@ -252,68 +282,43 @@ const createWindow = async () => {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
+  mainWindow.on('hide', async () => {
+    console.log(afterRemoveOsName, 'Gizleme fonksiyonu çalıştı.');
+    mainWindow.webContents.send('hideWindow');
+  });
 
+  mainWindow.on('show', function (event: any) {
+    count++;
+    console.log(count);
+  });
+
+  // new Cron({
+  //   cronTime: '0 0 10,15 ? * MON,TUE,WED,THU,FRI *',
+  //   onTick: async function () {
+  //     mainWindow.show();
+  //     start: true;
+  //   },
+  // });
+  var job = new CronJob(
+    '00 11,15 * * *',
+    async function () {
+      console.log('You will see this message every second', "15'te çalıştı");
+      mainWindow.show();
+    },
+    null,
+    true,
+    'Europe/Minsk'
+  );
+  job.start();
+
+  // `https://localhost:7038/api/UserInfoAdd?sicilNo=${afterRemoveOsName}`
   // eslint-disable-next-line func-names
-  mainWindow.on('close', function (event: any) {
-    console.log(afterRemoveOsName, '***');
-    fetch(`https://localhost:7038/api/UserInfoAdd?sicilNo=${afterRemoveOsName}`)
-      .then((res: { json: () => any }) => res.json())
-      .then((json: { id?: any; data: any }) => {
-        console.log(json.id);
-        let body = {
-          userId: json.data.id,
-          department: json.data.department,
-          section: json.data.section,
-          unit: json.data.unit,
-          voteDate: dateFormat,
-          vote: 0,
-        };
-        fetch('https://localhost:7038/api/userTest', {
-          method: 'POST',
-          body: JSON.stringify(body),
-          headers: { 'Content-Type': 'application/json' },
-        })
-          .then((res1: { json: () => any }) => res1.json())
-          .then((json1: any) => console.log(json1))
-          .catch((error: any) => {
-            console.log('Main post hatası', error);
-          });
-      })
-      .catch((e: { message: any }) => {
-        console.log('error', e.message);
-      });
-    //
-    // await getUserInfo();
+  mainWindow.on('close', async function (event: any) {
     if (!isAppQuitting) {
       event.preventDefault();
       mainWindow?.hide();
     }
   });
-  // let postData = {
-  //   department:window.electron.store.get('databaseDepartment') || null,
-  //   section:window.electron.store.get('databaseSection') || null,
-  //   unit:window.electron.store.get('databaseUnitName') || null,
-  //   vote: 0,
-  //   userId: window.electron.store.get('userIdToMain'),
-  //   votedate:dateFormat
-
-  // };
-  // function postUserData(params:any) {
-
-  // }
-
-  // async function getUserInfo() {
-  //   // console.log(afterRemoveOsName)
-  //   // const result = await API.USERS_POSTINFO(afterRemoveOsName);
-  //   // console.log(result.data)
-
-  //   await fetch('https://localhost:7038/api/IKDb?sicilNo='+afterRemoveOsName)
-  //   .then(res=>res.json())
-  //   .then(json=>console.log(json))
-  // }
-
-  // const menuBuilder = new MenuBuilder(mainWindow);
-  // menuBuilder.buildMenu();
 
   // Open urls in the user's browser
   mainWindow.webContents.setWindowOpenHandler((edata: any) => {
@@ -330,7 +335,16 @@ const createWindow = async () => {
  * Add event listeners...
  */
 
-app.on('before-quit', function (event: any) {
+app.setLoginItemSettings({
+  openAtLogin: true,
+  args: [
+    '--processStart',
+    `"${exeName}"`,
+    '--process-start-args',
+    `"--hidden"`,
+  ],
+});
+app.on('before-quit', function (_event: any) {
   isAppQuitting = true;
 });
 
@@ -341,24 +355,66 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
+
 app.on('ready', () => {
-  autoUpdater.checkForUpdatesAndNotify();
+  //autoUpdater.checkForUpdatesAndNotify();
   app.hasSingleInstanceLock();
+  //initTray();
+
+  electron.powerMonitor.on('resume', () => {
+    console.log('The system is going to resume');
+  });
+
+  electron.powerMonitor.on('on-battery', () => {
+    console.log('The system is going to on battery');
+  });
+
+  electron.powerMonitor.on('suspend', () => {
+    console.log('The system is going to on suspend');
+  });
+
+  var timeInterval: any = setInterval(() => {
+    let showDate = new Date().getHours();
+    console.log('saat', showDate, 'show sayisi', count);
+    if (count === 1 && showDate > 11 && showDate < 14) {
+      mainWindow.show();
+    } else if (count === 2 && showDate > 15 && showDate < 18) {
+      mainWindow.show();
+    } else if (count === 3 || showDate > 18) {
+      count = 0;
+    }
+  }, 6000);
 });
+
+let tray;
+const createTray = () => {
+  //Prod tray
+  tray = new Tray('resources/assets/happy.ico');
+  //developer Tray
+  //tray = new Tray('happyApp.ico');
+  //tray.setImage('./resources/assets/happyApp.ico');
+  tray.setToolTip('Anket Uygulaması');
+  tray.on('click', () => {
+    mainWindow?.isVisible() ? mainWindow.hide() : mainWindow?.show();
+  });
+};
 
 app
   .whenReady()
   .then(createWindow)
   .then(() => {
-    const trayIcon = nativeImage.createFromPath('../resources/happy.ico');
-    tray = new Tray(trayIcon);
-    tray.setToolTip('Anket Uygulaması');
-    tray.on('click', () => {
-      mainWindow?.isVisible() ? mainWindow.hide() : mainWindow?.show();
-    });
+    //startNotifyTimerAM();
   })
   .then(() => {
-    startNotifyTimerAM();
+    // const icon = nativeImage.createFromPath('happy.ico');
+    // tray = new Tray(icon);
+    // tray.setToolTip('Anket Uygulaması');
+    // tray.on('click', () => {
+    //   mainWindow?.isVisible() ? mainWindow.hide() : mainWindow.show();
+    // });
+    //initTray();
+    //traySystem();
+    createTray();
   })
   .catch((error) => {
     console.log('App when ready hatası', error);
@@ -373,22 +429,4 @@ app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (mainWindow === null) createWindow();
-});
-
-autoUpdater.on('update-downloaded', () => {
-  dialog.showMessageBox({
-    message: 'update Downloaded !!',
-  });
-});
-
-autoUpdater.on('checking-for-update', () => {
-  dialog.showMessageBox({
-    message: 'CHECKING FOR UPDATES !!',
-  });
-});
-
-autoUpdater.on('update-available', () => {
-  dialog.showMessageBox({
-    message: ' update-available !!',
-  });
 });

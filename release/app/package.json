@@ -1,6 +1,6 @@
 {
   "name": "anket-application",
-  "version": "0.0.2",
+  "version": "0.0.1",
   "description": "Burgan Bank Personel Memnuniyet Anketi",
   "main": "./dist/main/main.js",
   "author": {
@@ -8,6 +8,7 @@
     "email": "makbaba@burgan.com.tr",
     "url": "https://github.com/yarasaa/anket-app"
   },
+  "icon": "happyApp.ico",
   "scripts": {
     "electron-rebuild": "node -r ts-node/register ../../.erb/scripts/electron-rebuild.js",
     "link-modules": "node -r ts-node/register ../../.erb/scripts/link-modules.ts",

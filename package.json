@@ -1,13 +1,15 @@
 {
   "name": "electron-react-boilerplate",
   "description": "A foundation for scalable desktop apps",
+  "private": "true",
+  "version": "0.0.1",
   "scripts": {
     "build": "concurrently \"npm run build:main\" \"npm run build:renderer\"",
     "build:main": "cross-env NODE_ENV=production TS_NODE_TRANSPILE_ONLY=true webpack --config ./.erb/configs/webpack.config.main.prod.ts",
     "build:renderer": "cross-env NODE_ENV=production TS_NODE_TRANSPILE_ONLY=true webpack --config ./.erb/configs/webpack.config.renderer.prod.ts",
     "rebuild": "electron-rebuild --parallel --types prod,dev,optional --module-dir release/app",
     "lint": "cross-env NODE_ENV=development eslint . --ext .js,.jsx,.ts,.tsx",
-    "package": "ts-node ./.erb/scripts/clean.js dist && npm run build && electron-builder build --publish always",
+    "package": "set GH_TOKEN=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 && ts-node ./.erb/scripts/clean.js dist && npm run build && electron-builder build --publish never",
     "postinstall": "ts-node .erb/scripts/check-native-dep.js && electron-builder install-app-deps && cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true webpack --config ./.erb/configs/webpack.config.renderer.dev.dll.ts && opencollective-postinstall",
     "start": "ts-node ./.erb/scripts/check-port-in-use.js && npm run start:renderer",
     "start:main": "cross-env NODE_ENV=development electronmon -r ts-node/register/transpile-only ./src/main/main.ts",
@@ -35,7 +37,8 @@
     "appId": "org.erb.Personel Anket",
     "asar": true,
     "asarUnpack": "**\\*.{node,dll}",
-    "buildVersion": "0.0.2",
+    "buildVersion": "0.0.1",
+    "icon": "assets/icons/happyApp.ico",
     "files": [
       "dist",
       "node_modules",
@@ -71,14 +74,12 @@
       ]
     },
     "win": {
-      "icon": "./resources/smiley.png",
       "target": [
         "nsis"
       ],
+      "icon": "assets/icons/happyApp.ico",
       "publish": [
-        {
-          "provider": "github"
-        }
+        "github"
       ]
     },
     "linux": {
@@ -98,7 +99,8 @@
     "publish": {
       "provider": "github",
       "owner": "yarasaa",
-      "repo": "anket-app"
+      "repo": "anket-app",
+      "publishAutoUpdate": true
     }
   },
   "repository": {
@@ -186,6 +188,7 @@
     "browserslist-config-erb": "^0.0.3",
     "chalk": "^4.1.2",
     "concurrently": "^7.1.0",
+    "copy-webpack-plugin": "^10.2.4",
     "core-js": "^3.21.1",
     "cross-env": "^7.0.3",
     "css-loader": "^6.7.1",
@@ -194,7 +197,6 @@
     "electron": "^18.0.1",
     "electron-builder": "^23.0.3",
     "electron-devtools-installer": "^3.2.0",
-    "electron-fetch": "^1.7.4",
     "electron-notarize": "^1.2.1",
     "electron-rebuild": "^3.2.7",
     "electron-store": "^8.0.1",
@@ -240,7 +242,9 @@
     "webpack-merge": "^5.8.0"
   },
   "dependencies": {
+    "cron": "^1.8.2",
     "electron-debug": "^3.2.0",
+    "electron-fetch": "^1.7.4",
     "electron-log": "^4.4.6",
     "electron-updater": "^4.6.5",
     "history": "^5.3.0",
